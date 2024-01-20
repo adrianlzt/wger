@@ -247,6 +247,16 @@ class HelperWorkoutSessionForm(ModelForm):
                 Column('time_end', css_class='col-6'),
                 css_class='form-row'
             ),
+            Row(
+                Column('pr_pre_session_right_hand', css_class='col-6'),
+                Column('pr_pre_session_left_hand', css_class='col-6'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('pr_post_session_right_hand', css_class='col-6'),
+                Column('pr_post_session_left_hand', css_class='col-6'),
+                css_class='form-row'
+            ),
         )
         self.helper.form_tag = False
 

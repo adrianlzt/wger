@@ -56,5 +56,19 @@
         <th>{% translate "Notes" %}</th>
         <td>{{value.session.notes|default:'-/-'}}</td>
     </tr>
+    <tr>
+        <th>{% translate "Pre-session PR (right/left)" %}</th>
+        <td>{{value.session.pr_pre_session_right_hand|default:'-'}} / {{value.session.pr_pre_session_left_hand|default:'-'}}</td>
+    </tr>
+    <tr>
+        <th>{% translate "Post-session PR (right/left)" %}</th>
+        <td>{{value.session.pr_post_session_right_hand|default:'-'}} / {{value.session.pr_post_session_left_hand|default:'-'}}</td>
+    </tr>
+    <tr>
+        <th>{% translate "Force loss (right/left/both)" %}</th>
+        <td>{{value.session.force_loss_right_hand|default:'-'}} % / {{value.session.force_loss_left_hand|default:'-'}} % /
+        {{value.session.force_loss|default:'-'}} %</td>
+        </td>
+    </tr>
 </table>
 {% endif %}

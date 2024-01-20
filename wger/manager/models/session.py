@@ -104,6 +104,47 @@ class WorkoutSession(models.Model):
     Time the workout session ended
     """
 
+    pr_pre_session_right_hand = models.FloatField(
+        verbose_name=_('Pre-session PR (right hand)'),
+        blank=True,
+        null=True,
+        help_text='Personal record before the session (right hand, kg)',
+    )
+    """
+    Personal record before the session (right hand, kg)
+    """
+
+    pr_pre_session_left_hand = models.FloatField(
+        verbose_name=_('Pre-session PR (left hand)'),
+        blank=True,
+        null=True,
+        help_text='Personal record before the session (left hand, kg)',
+    )
+    """
+    Personal record before the session (left hand, kg)
+    """
+
+    pr_post_session_right_hand = models.FloatField(
+        verbose_name=_('Post-session PR (right hand)'),
+        blank=True,
+        null=True,
+        help_text='Personal record after the session (right hand, kg)',
+    )
+    """
+    Personal record after the session (right hand, kg)
+    """
+
+    pr_post_session_left_hand = models.FloatField(
+        verbose_name=_('Post-session PR (left hand)'),
+        blank=True,
+        null=True,
+        help_text='Personal record after the session (left hand, kg)',
+    )
+    """
+    Personal record after the session (left hand, kg)
+    """
+
+
     def __str__(self):
         """
         Return a more human-readable representation
@@ -149,3 +190,29 @@ class WorkoutSession(models.Model):
         """
         reset_workout_log(self.user_id, self.date.year, self.date.month)
         super(WorkoutSession, self).delete(*args, **kwargs)
+
+    def force_loss_right_hand(self):
+        """
+        Percentage of loss of the right hand between pre and post session
+        """
+        if self.pr_pre_session_right_hand and self.pr_post_session_right_hand:
+            return round(100 - (self.pr_post_session_right_hand * 100 / self.pr_pre_session_right_hand), 2)
+        return None
+
+    def force_loss_left_hand(self):
+        """
+        Percentage of loss of the left hand between pre and post session
+        """
+        if self.pr_pre_session_left_hand and self.pr_post_session_left_hand:
+            return round(100 - (self.pr_post_session_left_hand * 100 / self.pr_pre_session_left_hand), 2)
+        return None
+
+    def force_loss(self):
+        """
+        Percentage of loss between pre and post session
+
+        100 - ((post-right + post-left) / (pre-right + pre-left)) * 100
+        """
+        if self.force_loss_right_hand() and self.force_loss_left_hand():
+            return round(100 - ((self.pr_post_session_right_hand + self.pr_post_session_left_hand) * 100 / (self.pr_pre_session_right_hand + self.pr_pre_session_left_hand)), 2)
+        return None
