@@ -49,3 +49,6 @@ djangorestframework-simplejwt[crypto]==5.3.1
 # Not used anymore, but needed because some modules are imported in DB migration
 # files
 django-sortedm2m~=3.1
+
+# Widgets executing python code
+RestrictedPython==7.0

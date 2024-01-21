@@ -15,7 +15,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'unit']
+        fields = ['id', 'name', 'unit', 'description', 'code']
 
 
 class MeasurementSerializer(serializers.ModelSerializer):

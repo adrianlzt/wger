@@ -209,6 +209,11 @@ router.register(
     measurements_api_views.CategoryViewSet,
     basename='measurement-category',
 )
+router.register(
+    r'measurement-test-code',
+    measurements_api_views.TestCodeViewSet,
+    basename='measurement-test-code',
+)
 
 #
 # Sitemaps

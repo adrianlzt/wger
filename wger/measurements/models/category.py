@@ -43,6 +43,21 @@ class Category(models.Model):
         max_length=30,
     )
 
+    description = models.TextField(
+        verbose_name=_('Description'),
+        null=True,
+        blank=True,
+    )
+
+    code = models.TextField(
+        verbose_name=_('Code'),
+        null=True,
+        blank=True,
+    )
+    """Python code to calculate the value.
+    Instead of storing a single value, store a python code that could be used
+    to calculate a value based on other values, user profile, etc"""
+
     def get_owner_object(self):
         """
         Returns the object that has owner information
