@@ -211,11 +211,22 @@ def execute_code(code, category_id, user):
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=SyntaxWarning)
-        byte_code = compile_restricted(
-                code,
-                '<string>',
-                'exec',
-        )
+        try:
+            byte_code = compile_restricted(
+                    code,
+                    '<string>',
+                    'exec',
+            )
+        except Exception as e:
+            return Response({
+                'count': 0,
+                'next': None,
+                'previous': None,
+                'results': [],
+                "print": None,
+                "error": str(e),
+            }) # TODO make the UI to handle the error correctly
+            # }, status=401)
 
     try:
         exec(byte_code, loc)
