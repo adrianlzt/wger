@@ -261,6 +261,7 @@ def execute_code(code, category_id, user):
     for i, result in enumerate(loc.get("results", [])):
         result["category"] = int(category_id)
         result["id"] = i + 1
+        result["notes"] = ""
 
     # Get print output
     print_output = None
@@ -268,10 +269,11 @@ def execute_code(code, category_id, user):
     if print_func is not None:
         print_output = print_func()
 
+    results = loc.get("results", [])
     return Response({
-        'count': 0,
+        'count': len(results),
         'next': None,
         'previous': None,
-        'results': loc.get("results", []),
+        'results': results,
         "print": print_output,
     })
