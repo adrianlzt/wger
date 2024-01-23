@@ -174,6 +174,8 @@ def execute_code(code, category_id, user):
     def get_measurement_by_name_and_date(category_name, date):
         """Get measurement by name and date
 
+        If there is no measurement for that date, return None.
+
         Args:
             category_name (str): Category name
             date (datetime.date): Date
@@ -182,10 +184,18 @@ def execute_code(code, category_id, user):
             float: Measurement value
         """
         category = Category.objects.get(name=category_name, user=user)
-        return Measurement.objects.get(category=category, date=date).value
+        measurement = None
+        try:
+             measurement = Measurement.objects.get(category=category, date=date).value
+        except:
+            pass
+
+        return measurement
 
     def get_weight_by_date(date):
         """Get weight by date
+
+        If there is no weight for that date, return None.
 
         Args:
             date (datetime.date): Date
@@ -193,7 +203,13 @@ def execute_code(code, category_id, user):
         Returns:
             float: Weight value
         """
-        return WeightEntry.objects.get(date=date, user=user).weight
+        weight = None
+        try:
+            weight = WeightEntry.objects.get(date=date, user=user).weight
+        except:
+            pass
+
+        return weight
 
     # Execute widget code in a restricted environment
     loc = {
