@@ -93,7 +93,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class TestCodeViewSet(viewsets.ViewSet):
     def create(self, request, *args, **kwargs):
-        return execute_code(request.data.get("code"), 1)
+        return execute_code(request.data.get("code"), 1, user=self.request.user)
 
 
 class MeasurementViewSet(viewsets.ModelViewSet):
@@ -147,7 +147,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         return Measurement.objects.filter(category__user=self.request.user)
 
 
-def execute_code(code, category_id):
+def execute_code(code, category_id, user):
     """Given a python code string, execute it and return the results.
 
     The python code will be executed in a restricted environment.
@@ -157,6 +157,7 @@ def execute_code(code, category_id):
     Args:
         code (str): Python code to execute
         category_id (int): Category ID
+        user (User): User, to filter the values
 
     Returns:
         Response: Response with the results, same format as list view for measurements
@@ -164,10 +165,10 @@ def execute_code(code, category_id):
     # TODO in the editor view show the results and errors at edit time.
     # TODO if there is an error executing the code, show the error message to the user
     def get_category_by_name(name):
-        return Category.objects.get(name=name)
+        return Category.objects.get(name=name, user=user)
 
     def get_measurements_by_category_name(category_name):
-        category = Category.objects.get(name=category_name)
+        category = Category.objects.get(name=category_name, user=user)
         return Measurement.objects.filter(category=category)
 
     def get_measurement_by_name_and_date(category_name, date):
@@ -180,7 +181,7 @@ def execute_code(code, category_id):
         Returns:
             float: Measurement value
         """
-        category = Category.objects.get(name=category_name)
+        category = Category.objects.get(name=category_name, user=user)
         return Measurement.objects.get(category=category, date=date).value
 
     def get_weight_by_date(date):
@@ -192,7 +193,7 @@ def execute_code(code, category_id):
         Returns:
             float: Weight value
         """
-        return WeightEntry.objects.get(date=date).weight
+        return WeightEntry.objects.get(date=date, user=user).weight
 
     # Execute widget code in a restricted environment
     loc = {
