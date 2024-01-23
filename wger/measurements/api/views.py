@@ -118,8 +118,8 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         # Use that ID to get the category name
         category_code = Category.objects.get(id=category_id).code
 
-        if category_code != '':
-            return execute_code(category_code, category_id)
+        if category_code and category_code != '':
+            return execute_code(category_code, category_id, user=self.request.user)
 
         queryset = self.filter_queryset(self.get_queryset())
 
