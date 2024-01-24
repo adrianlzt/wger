@@ -16,7 +16,12 @@
 {#       #}
 {# Title #}
 {#       #}
-{% block title %}{% translate "Workout" %}{% endblock %}
+{% block title %}{% translate "Workout" %}
+    {% if workout.is_dynamic %}
+(Dynamic)
+    {% endif %}
+{% endblock %}
+
 
 
 {#        #}

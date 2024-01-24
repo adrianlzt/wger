@@ -17,6 +17,8 @@
 # Standard Library
 import copy
 import logging
+import warnings
+import datetime
 
 # Django
 from django.contrib.auth.decorators import login_required
@@ -47,6 +49,7 @@ from django.views.generic import (
 # Third Party
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from RestrictedPython import compile_restricted
 
 # wger
 from wger.manager.forms import (
@@ -59,6 +62,12 @@ from wger.manager.models import (
     Workout,
     WorkoutLog,
 )
+from wger.measurements.models import (
+    Category,
+    Measurement,
+)
+from wger.weight.models import WeightEntry
+
 from wger.utils.generic_views import (
     WgerDeleteMixin,
     WgerFormMixin,
@@ -124,6 +133,50 @@ def view(request, pk):
     }
 
     return render(request, 'workout/view.html', context)
+
+
+def autoselect_day(request, pk):
+    """
+    Given a workout ID, return the day that should be performed today.
+
+    Each day has a "priority" field and a "decision_code" field. The priority
+    field is a number that indicates the order in which the days should be
+    analyzed. For each day, the decision_code is evaluated. If it returns True,
+    the day is selected. If it returns False, the next day is analyzed. If all
+    days have been analyzed and none of them returned True, the last day is
+    selected.
+
+    Returns the day ID.
+    """
+    workout = get_object_or_404(Workout, pk=pk)
+    user = workout.user
+    is_owner = request.user == user
+
+    if not is_owner and not user.userprofile.ro_access:
+        return HttpResponseForbidden()
+
+    # Get the days
+    days = workout.day_set.all()
+
+    # Sort the days by priority, highest first
+    days = sorted(days, key=lambda day: day.priority, reverse=True)
+
+    # Get the day that should be performed today
+    today = None
+    debug = ""
+    for day in days:
+        decision, debug = evaluate_day(day.decision_code, user)
+        if decision:
+            today = day
+            break
+    if today is None:
+        today = days[-1]
+
+
+    return render(request, 'workout/autoselect.html', {
+        'day': today,
+        'debug': debug.replace("\n", "<br>"),
+    })
 
 
 @login_required()
@@ -282,3 +335,126 @@ class WorkoutMarkAsTemplateView(WgerFormMixin, LoginRequiredMixin, UpdateView):
         context = super(WorkoutMarkAsTemplateView, self).get_context_data(**kwargs)
         context['title'] = _('Mark as template')
         return context
+
+
+def evaluate_day(code, user):
+    """Given a python code string, execute it and return the result.
+
+    The python code will be executed in a restricted environment.
+
+    Args:
+        code (str): Python code to execute
+        user (User): User, to filter the values
+
+    Returns:
+        (bool, str): Tuple with the result of the code and the debug output
+    """
+    # TODO in the editor view show the results and errors at edit time.
+    # TODO if there is an error executing the code, show the error message to the user
+    def get_category_by_name(name):
+        return Category.objects.get(name=name, user=user)
+
+    def get_measurements_by_category_name(category_name):
+        category = Category.objects.get(name=category_name, user=user)
+        return Measurement.objects.filter(category=category)
+
+    def get_measurement_by_name_and_date(category_name, date):
+        """Get measurement by name and date
+
+        If there is no measurement for that date, return None.
+
+        Args:
+            category_name (str): Category name
+            date (datetime.date): Date
+
+        Returns:
+            float: Measurement value
+        """
+        category = Category.objects.get(name=category_name, user=user)
+        measurement = None
+        try:
+             measurement = Measurement.objects.get(category=category, date=date).value
+        except:
+            pass
+
+        return measurement
+
+    def get_weight_by_date(date):
+        """Get weight by date
+
+        If there is no weight for that date, return None.
+
+        Args:
+            date (datetime.date): Date
+
+        Returns:
+            float: Weight value
+        """
+        weight = None
+        try:
+            weight = WeightEntry.objects.get(date=date, user=user).weight
+        except:
+            pass
+
+        return weight
+
+    # Execute widget code in a restricted environment
+    loc = {
+        "get_category_by_name": get_category_by_name,
+        "get_measurements_by_category_name": get_measurements_by_category_name,
+        "get_measurement_by_name_and_date": get_measurement_by_name_and_date,
+        "get_weight_by_date": get_weight_by_date,
+        "today": datetime.date.today(),
+        # Allow to get "prints"
+        "_print_": PrintCollector,
+        "_getattr_": getattr,
+        "_getiter_": iter,
+        "decision": False,
+    }
+    PrintCollector.output = []
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=SyntaxWarning)
+        try:
+            byte_code = compile_restricted(
+                    code,
+                    '<string>',
+                    'exec',
+            )
+        except Exception as e:
+            return False, str(e)
+
+    try:
+        exec(byte_code, loc)
+    except Exception as e:
+        return False, str(e)
+
+    # Get print output
+    print_output = ""
+    print_func = loc.get('_print')
+    if print_func is not None:
+        print_output = print_func()
+
+    decision = loc.get("decision")
+    return decision, print_output
+
+# https://stackoverflow.com/a/76214209/1407722
+class PrintCollector:
+    output = []
+
+    def __init__(self, _getattr_=None):
+        self._getattr_ = _getattr_
+
+    def write(self, text):
+        PrintCollector.output.append(text)
+
+    def __call__(self):
+        return ''.join(PrintCollector.output)
+
+    def _call_print(self, *objects, **kwargs):
+        if kwargs.get('file', None) is None:
+            kwargs['file'] = self
+        else:
+            self._getattr_(kwargs['file'], 'write')
+
+        print(*objects, **kwargs)

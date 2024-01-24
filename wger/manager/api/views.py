@@ -56,6 +56,7 @@ from wger.manager.models import (
 )
 from wger.utils.viewsets import WgerOwnerObjectModelViewSet
 from wger.weight.helpers import process_log_entries
+from wger.manager.views.workout import evaluate_day
 
 
 class WorkoutViewSet(viewsets.ModelViewSet):
@@ -284,7 +285,35 @@ class DayViewSet(WgerOwnerObjectModelViewSet):
         'description',
         'training',
         'day',
+        'decision_code',
+        'priority',
     )
+
+    def list(self, request, *args, **kwargs):
+        # Get the training ID
+        training_id = request.GET.get('training')
+        # Get the workout corresponding to the training ID
+        workout = Workout.objects.get(pk=training_id)
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # If workout is dynamic, reorder the days based on its decision code and priority.
+        if workout.is_dynamic:
+            for day in queryset:
+                day.decision_result, day.decision_stdout = evaluate_day(day.decision_code, self.request.user)
+
+            # First days are ordered by decision code, those "true" will be first.
+            # In each groups, days are ordered by priority, the highest priority will be first.
+            queryset = sorted(queryset, key=lambda day: (-day.decision_result, -day.priority))
+
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_queryset(self):
         """

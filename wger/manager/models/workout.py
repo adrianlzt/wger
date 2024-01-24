@@ -83,6 +83,15 @@ class Workout(models.Model):
         default=False,
         null=False,
     )
+    is_dynamic = models.BooleanField(
+        verbose_name=_('Dynamic workout'),
+        help_text=_(
+            'A dynamic workout chooses the day to be executed based on the '
+            'formulas defined in the days'
+        ),
+        default=False,
+        null=False,
+    )
 
     user = models.ForeignKey(
         User,

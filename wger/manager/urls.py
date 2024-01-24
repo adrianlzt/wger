@@ -119,6 +119,11 @@ patterns_workout = [
         workout.view,
         name='view',
     ),
+    path(
+        '<int:pk>/autoselect',
+        workout.autoselect_day,
+        name='autoselect',
+    ),
     re_path(
         r'^calendar/(?P<username>[\w.@+-]+)$',
         log.calendar,

@@ -45,7 +45,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workout
-        fields = ('id', 'name', 'creation_date', 'description')
+        fields = ('id', 'name', 'creation_date', 'description', 'is_dynamic')
 
 
 class WorkoutTemplateSerializer(serializers.ModelSerializer):
@@ -110,7 +110,7 @@ class DaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Day
-        fields = ['id', 'training', 'description', 'day']
+        fields = ['id', 'training', 'description', 'day', 'decision_result', 'decision_stdout']
 
 
 class SetSerializer(serializers.ModelSerializer):

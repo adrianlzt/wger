@@ -57,7 +57,7 @@ class DayView(WgerFormMixin, LoginRequiredMixin):
     """
 
     model = Day
-    fields = ('description', 'day')
+    fields = ('description', 'day', 'priority', 'decision_code')
 
     def get_success_url(self):
         return reverse('manager:workout:view', kwargs={'pk': self.object.training_id})
@@ -70,21 +70,22 @@ class DayView(WgerFormMixin, LoginRequiredMixin):
         # Get the form
         form = super(DayView, self).get_form(form_class)
 
-        # Calculate the used days ('used' by other days in the same workout)
-        if self.object:
-            workout = self.object.training
-        else:
-            workout = Workout.objects.get(pk=self.kwargs['workout_pk'])
+        # # Calculate the used days ('used' by other days in the same workout)
+        # if self.object:
+        #     workout = self.object.training
+        # else:
+        #     workout = Workout.objects.get(pk=self.kwargs['workout_pk'])
 
-        used_days = []
-        for day in workout.day_set.all():
-            for weekday in day.day.all():
-                if not self.object or day.id != self.object.id:
-                    used_days.append(weekday.id)
-        used_days.sort()
+        # Commented out because for dynamic days, the days are not set yet
+        # used_days = []
+        # for day in workout.day_set.all():
+        #     for weekday in day.day.all():
+        #         if not self.object or day.id != self.object.id:
+        #             used_days.append(weekday.id)
+        # used_days.sort()
 
-        # Set the queryset for day
-        form.fields['day'].queryset = DaysOfWeek.objects.exclude(id__in=used_days)
+        # # Set the queryset for day
+        # form.fields['day'].queryset = DaysOfWeek.objects.exclude(id__in=used_days)
 
         return form
 

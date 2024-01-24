@@ -75,6 +75,7 @@ class WorkoutForm(ModelForm):
         fields = (
             'name',
             'description',
+            'is_dynamic',
         )
 
 
@@ -114,6 +115,8 @@ class DayForm(ModelForm):
         self.helper.layout = Layout(
             'description',
             'day',
+            'priority',
+            'decision_code',
         )
 
 

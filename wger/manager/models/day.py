@@ -43,6 +43,47 @@ class Day(models.Model):
     )
     day = models.ManyToManyField(DaysOfWeek, verbose_name=_('Day'))
 
+    priority = models.PositiveSmallIntegerField(
+        verbose_name=_('Priority'),
+        default=0,
+        help_text=_(
+            'The priority of this day. Days with a higher priority '
+            'are evaluated first when deciding which day to propose '
+            'for the next workout.'
+        ),
+    )
+
+    decision_code = models.TextField(
+        verbose_name=_('Decision code'),
+        help_text=_(
+            'Python code to decide whether this day should be '
+            'proposed for the next workout. The code should return '
+            'True or False.'
+        ),
+        null=True,
+        blank=True,
+    )
+
+    decision_result = models.BooleanField(
+        verbose_name=_('Decision result'),
+        help_text=_(
+            'The result of the decision code. This is only used '
+            'internally.'
+        ),
+        default=False,
+    )
+
+    decision_stdout = models.TextField(
+        verbose_name=_('Decision stdout'),
+        help_text=_(
+            'The output of the decision code. This is only used '
+            'internally.'
+        ),
+        null=True,
+        blank=True,
+    )
+
+
     def __str__(self):
         """
         Return a more human-readable representation
